@@ -1,0 +1,60 @@
+---
+- name: "set hostname"
+  hostname: name={{inventory_hostname}}
+
+- name: "configure sudoers"
+  copy:
+    dest=/etc/sudoers
+    src=etc/sudoers
+    mode=600
+
+- name: "create users"
+  user: name={{item.name}} state=present groups=sudo,adm shell=/bin/bash
+  with_items: users
+  no_log: yes
+
+- name: "authorize users' keys"
+  authorized_key: user={{item.0.name}} key='{{item.1}}'
+  with_subelements:
+    - users
+    - authorized_keys
+  no_log: yes
+
+- name: "create deploy user"
+  user: name=deploy state=present groups=sudo shell=/bin/bash
+
+- name: "create automation user"
+  user: name=automation state=present shell=/bin/bash
+
+- name: "authorize users' keys for deploy user"
+  authorized_key: user=deploy key='{{item.1}}'
+  with_subelements:
+    - users
+    - authorized_keys
+  no_log: yes
+
+- name: "make github.com known host for deploy user"
+  lineinfile:
+    dest=/home/deploy/.ssh/known_hosts
+    create=yes owner=deploy group=deploy mode='0644'
+    state=present
+    regexp='^{{item.host}}'
+    line='{{item.line}}'
+  with_items:
+    - { host: github.com, line: 'github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==' }
+
+
+- name: "install packages"
+  apt: name={{item}} update_cache=yes cache_valid_time=86400
+  with_items:
+    - ack-grep
+    - build-essential
+    - git
+    - fish
+    - htop
+    - mosh
+    - xfsprogs
+    - tmux
+
+
+# vim:sw=2 sts=2
