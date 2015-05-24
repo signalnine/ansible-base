@@ -52,6 +52,9 @@
     - mosh
     - xfsprogs
     - tmux
+    - zsh
+    - vim
+    - screen
 
 
 # vim:sw=2 sts=2
