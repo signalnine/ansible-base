@@ -1,2 +1,0 @@
----
-inventory_domain: '{{ inventory_hostname | replace(inventory_hostname_short ~ ".", "") }}'
